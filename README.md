@@ -1,2 +1,39 @@
 # urgolapp
+
 Learning the watch for Kids in the age of 5 till 8 years.
+
+**Die Uhr lernen mit Urgol** – eine kleine Lern-App, mit der Kinder spielerisch die Uhr lesen und stellen lernen. Läuft im Browser, lässt sich auf den Home-Bildschirm legen und funktioniert danach auch offline.
+
+## Funktionen
+
+- **Uhr stellen:** Zeiger mit dem Finger ziehen (Zeiger-Uhr) oder Ziffern mit Pfeilen einstellen (Digitaluhr).
+- **Uhr lesen:** Uhrzeit ablesen und aus drei Antworten die richtige wählen.
+- **Schwierigkeit per Schieberegler:** ganze Stunden → halbe Stunden → Viertelstunden → 5 Minuten → minutengenau.
+- **Gezielte Tipps** bei Fehlern, z. B. „halb vier“ = 3:30.
+- **Sterne** für jede richtige Antwort, Vergleich mit dem letzten Spieltag und Konfetti bei Verbesserung.
+- **Spielzeit-Limit:** 15 Minuten pro Tag, danach macht Urgol Pause bis morgen.
+- **Hell- und Dunkelmodus**, passend für Handy, Tablet und Laptop.
+
+## Dateien
+
+| Datei | Zweck |
+| --- | --- |
+| `index.html` | Die komplette App (HTML, CSS, JavaScript in einer Datei) |
+| `manifest.webmanifest` | App-Name, Farben und Icons für den Home-Bildschirm |
+| `sw.js` | Service Worker für den Offline-Betrieb |
+| `icons/` | Urgol-Icons (`urgol.svg` ist die Vorlage) |
+
+## Auf dem Handy installieren
+
+1. Die Dateien auf einem Webserver mit HTTPS bereitstellen (z. B. GitHub Pages oder Netlify).
+2. Die Adresse auf dem Handy öffnen:
+   - **iPhone (Safari):** Teilen → „Zum Home-Bildschirm“
+   - **Android (Chrome):** Menü → „App installieren“
+3. Die App einmal mit Internet öffnen. Danach läuft sie auch offline.
+
+## Anpassen
+
+- **Spielzeit:** in `index.html` die Zeile `var LIMIT = 15 * 60;` (Sekunden).
+- **Nach Änderungen** in `sw.js` die Version erhöhen (`urgol-v1` → `urgol-v2`), damit installierte Apps das Update laden.
+
+Sterne, Einstellungen und Spielzeit werden nur lokal im Browser des jeweiligen Geräts gespeichert.

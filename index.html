@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Uhr lernen mit Urgol</title>
+<meta name="description" content="Die Uhr lernen mit Urgol">
+<meta name="theme-color" content="#DCEFF7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111A2F" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Urgol">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#DCEFF7; --ink:#1F2B4D; --muted:#56648A; --face:#FFFFFF; --card:#FFFFFF;
+  --hour:#EE7A16; --minute:#2F6FDB; --good:#228F55; --bad:#D9483B; --line:#B7D3E2;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#111A2F; --ink:#E9EFFB; --muted:#9DABCA; --face:#1C2744; --card:#1C2744;
+    --hour:#FF9D47; --minute:#74A2FF; --good:#45C47E; --bad:#FF6B5E; --line:#2E3C61;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111A2F; --ink:#E9EFFB; --muted:#9DABCA; --face:#1C2744; --card:#1C2744;
+  --hour:#FF9D47; --minute:#74A2FF; --good:#45C47E; --bad:#FF6B5E; --line:#2E3C61;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; min-height:100%; background:var(--bg); color:var(--ink);
+  font-family:"Baloo 2", ui-rounded, "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+.app{max-width:520px; margin:0 auto; padding:0 16px 24px}
+button{font:inherit; color:inherit; cursor:pointer}
+:focus-visible{outline:3px solid var(--minute); outline-offset:2px}
+
+/* Kopfzeile */
+.top{display:flex; align-items:center; gap:8px; padding:12px 0 6px}
+.modebar{display:flex; justify-content:center; margin:0 0 26px}
+.modes{display:inline-flex; background:var(--card); border-radius:999px; padding:4px}
+.modes button{border:0; background:transparent; font-weight:700; font-size:18px; padding:8px 20px; border-radius:999px; color:var(--muted)}
+.modes button[aria-selected="true"]{background:var(--ink); color:var(--bg)}
+.stars{margin-left:auto; display:flex; align-items:center; gap:4px; font-weight:800; font-size:22px}
+.stars svg{width:26px; height:26px; fill:#F5B800}
+.stars.pop svg{animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.6) rotate(15deg)}100%{transform:scale(1)}}
+.gear,.help{width:44px; height:44px; border-radius:50%; border:0; background:var(--card); display:grid; place-items:center}
+.help{font-weight:800; font-size:24px; line-height:1}
+.gear svg{width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+
+/* Aufgabe */
+.task{text-align:center; min-height:0; margin-bottom:14px}
+.ask{margin:4px 0 0; font-size:18px; font-weight:600; color:var(--muted)}
+.target{margin:0; font-size:clamp(32px,9vw,46px); font-weight:800; line-height:1.1}
+body.mode-read .task{min-height:0; margin-bottom:-4px}
+body.mode-read .ask{font-size:23px; margin-top:8px}
+.digital{display:inline-block; margin:4px 0 0; font-size:22px; font-weight:700; color:var(--muted); border:2px solid var(--line); border-radius:10px; padding:0 12px}
+
+/* Uhr */
+.clockwrap{display:grid; place-items:center; margin:4px 0 10px}
+#clock{width:min(92vw,54vh,440px); height:auto; touch-action:none; user-select:none; -webkit-user-select:none; overflow:visible}
+#clock.interactive{cursor:grab}
+#clock.dragging{cursor:grabbing}
+.face{fill:var(--face); stroke:var(--ink); stroke-width:7; transition:stroke .3s}
+#clock.win .face{stroke:var(--good)}
+.tick{stroke:var(--ink); stroke-linecap:round}
+.tick.minor{stroke-width:1.6; opacity:.45}
+.tick.major{stroke-width:3.2}
+.tick.mid{stroke-width:2.4; opacity:.7}
+.hn{fill:var(--ink); font-size:28px; font-weight:800; font-family:inherit}
+.mn{fill:var(--minute); font-size:13px; font-weight:700; font-family:inherit}
+.hh{stroke:var(--hour); stroke-width:12; stroke-linecap:round}
+.hk{fill:var(--hour)}
+.mh{stroke:var(--minute); stroke-width:7; stroke-linecap:round}
+.mk{fill:var(--minute)}
+.cap{fill:var(--ink)}
+.capin{fill:var(--face)}
+#clock.shake,#digi.shake .dbox,#digi.shake .dnum,#digi.shake .dcolon{animation:shake .4s ease}
+
+/* Digitaluhr: Pfeile über und unter dem Kasten */
+.digi{--fs:clamp(72px,23vw,118px); --slot:calc(var(--fs) * 1.3); display:grid; width:min(100%, calc(var(--slot) * 2 + var(--fs) * .5 + 48px)); grid-template-columns:1fr auto auto auto 1fr; column-gap:4px; align-items:center; justify-items:center; row-gap:12px; margin:6px auto; touch-action:manipulation; user-select:none; -webkit-user-select:none}
+.dbox{grid-row:2; grid-column:1 / 6; align-self:stretch; justify-self:stretch; background:var(--face); border:7px solid var(--ink); border-radius:34px; transition:border-color .3s}
+.digi.win .dbox{border-color:var(--good)}
+.dnum{grid-row:2; position:relative; font-size:var(--fs); font-weight:800; line-height:1; font-variant-numeric:tabular-nums; padding:24px 0 26px; text-align:center}
+.dnum.hour{grid-column:2; color:var(--hour)}
+.dnum.min{grid-column:4; color:var(--minute)}
+.dcolon{grid-row:2; grid-column:3; position:relative; font-size:calc(var(--fs) * .85); font-weight:800; line-height:1; color:var(--ink); padding:0 2px .12em}
+.arr{width:84px; height:54px; border:0; border-radius:18px; display:grid; place-items:center; background:var(--card); box-shadow:0 3px 0 color-mix(in srgb, currentColor 35%, transparent); touch-action:manipulation}
+.arr svg{width:30px; height:30px; fill:currentColor}
+.arr:active{transform:translateY(2px); box-shadow:0 1px 0 color-mix(in srgb, currentColor 35%, transparent)}
+.arr.up{grid-row:1}
+.arr.down{grid-row:3}
+.arr.hourc{grid-column:2; color:var(--hour)}
+.arr.minc{grid-column:4; color:var(--minute)}
+.digi.readonly .arr{display:none}
+.digi.hourlock .arr.minc{visibility:hidden}
+body.digimode .only-analog,body:not(.digimode) .only-digital{display:none}
+
+/* Umschalter Zeiger-Uhr / Digitaluhr */
+.seg{display:flex; background:var(--bg); border-radius:999px; padding:4px; gap:4px}
+.seg button{flex:1; border:0; background:transparent; font-weight:700; font-size:17px; padding:9px 10px; border-radius:999px; color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink); color:var(--bg)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* Knöpfe */
+.controls{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; align-items:center}
+.primary{border:0; background:var(--good); color:#fff; font-weight:800; font-size:22px; padding:12px 40px; border-radius:18px; box-shadow:0 5px 0 rgba(0,0,0,.2)}
+.primary:active{transform:translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.2)}
+.ghost{border:2px solid var(--line); background:transparent; font-weight:600; font-size:16px; padding:8px 16px; border-radius:14px}
+
+.options{display:grid; gap:10px; max-width:420px; margin:0 auto}
+.opt{display:flex; justify-content:space-between; align-items:center; gap:12px; background:var(--card); border:3px solid var(--line); border-radius:18px; padding:10px 18px; text-align:left}
+.opt .ow{font-weight:800; font-size:22px}
+.opt .od{font-weight:700; font-size:18px; color:var(--muted)}
+.opt.right{background:var(--good); border-color:var(--good); color:#fff}
+.opt.right .od{color:#fff}
+.opt.wrong{border-color:var(--bad); opacity:.55}
+body.nodigital .od{display:none}
+
+.feedback{text-align:center; font-weight:600; font-size:18px; min-height:2.8em; margin:10px 0 0}
+.feedback.good{color:var(--good); font-weight:800; font-size:22px}
+
+/* Einstellungen */
+dialog{border:0; padding:0; border-radius:24px; background:var(--card); color:var(--ink); width:min(92vw,420px); max-height:88vh}
+dialog::backdrop{background:rgba(8,16,36,.5)}
+.sheet{padding:20px}
+.sheet h2{margin:0 0 12px; font-size:26px; line-height:1.2}
+fieldset{border:0; padding:0; margin:0 0 14px}
+.helpsheet .helplogo{display:block; width:84px; margin:0 auto 4px}
+.helpsheet h2{text-align:center}
+.helpsheet p{margin:0 0 10px; font-size:18px; line-height:1.45}
+.sheet.helpsheet .row{justify-content:center}
+/* Schwierigkeits-Regler */
+.diff{--row:58px; --dot:64px; user-select:none; -webkit-user-select:none; touch-action:none; border-radius:16px; padding:2px 0}
+.dend{width:var(--dot); text-align:center; font-weight:800; font-size:16px; line-height:1.2; color:var(--muted)}
+.dend.hard{color:var(--bad)}
+.dend.easy{color:var(--good)}
+.dtrack{position:relative; margin:4px 0}
+.drail{position:absolute; left:calc(var(--dot) / 2 - 3px); top:calc(var(--row) / 2); bottom:calc(var(--row) / 2); width:6px; border-radius:3px; background:var(--line)}
+.dfill{position:absolute; left:0; top:0; width:100%; border-radius:3px; background:var(--minute); transition:height .18s ease}
+.dthumb{position:absolute; left:calc(var(--dot) / 2 - 18px); width:36px; height:36px; border-radius:50%; background:var(--minute); border:5px solid var(--face); box-shadow:0 2px 6px rgba(0,0,0,.3); transition:top .18s ease; pointer-events:none; z-index:2}
+.diff.dragging .dthumb,.diff.dragging .dfill{transition:none}
+.dstop{position:relative; display:flex; align-items:center; gap:10px; height:var(--row); cursor:pointer}
+.ddot{flex:none; width:var(--dot); display:grid; place-items:center}
+.ddot::before{content:""; width:14px; height:14px; border-radius:50%; background:var(--face); border:3px solid var(--line); position:relative; z-index:1}
+.dstop.on .ddot::before{background:var(--minute); border-color:var(--minute)}
+.dtext b{display:block; font-size:18px; line-height:1.15}
+.dtext small{color:var(--muted); font-size:15px}
+.dstop.off .dtext{opacity:.45}
+.dstop.cur .dtext b{color:var(--minute)}
+.diff:focus-visible{outline:3px solid var(--minute); outline-offset:4px}
+.lvlnote{margin:0; color:var(--bad); font-weight:600; font-size:15px}
+legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
+.lvl{display:flex; align-items:center; gap:12px; padding:8px 12px; border:2px solid var(--line); border-radius:14px; margin-bottom:8px; cursor:pointer}
+.lvl:has(input:checked){border-color:var(--minute); background:color-mix(in srgb, var(--minute) 12%, transparent)}
+.lvl input,.tog input{width:22px; height:22px; accent-color:var(--minute); margin:0; flex:none}
+.lvl b{display:block; font-size:18px; line-height:1.2}
+.lvl small{color:var(--muted); font-size:15px}
+.tog{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; font-size:17px; cursor:pointer}
+.sheet .row{display:flex; justify-content:space-between; gap:10px; margin-top:14px}
+.sheet .primary{font-size:18px; padding:10px 28px}
+
+
+/* Startseite */
+.start{position:fixed; inset:0; z-index:50; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px)); text-align:center; transition:opacity .35s ease, transform .35s ease}
+.start.gone{opacity:0; transform:scale(1.04); pointer-events:none}
+.logo{width:min(56vw,230px); height:auto; animation:wobble 3.2s ease-in-out infinite; transform-origin:50% 90%}
+@keyframes wobble{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+.logo .lb{fill:var(--hour); stroke:var(--ink); stroke-width:6}
+.logo .lf{fill:var(--face); stroke:var(--ink); stroke-width:8}
+.logo .li{fill:var(--ink)}
+.logo .ls{stroke:var(--ink); stroke-width:6; fill:none; stroke-linecap:round}
+.logo .lt{stroke:var(--ink); stroke-width:5; stroke-linecap:round}
+.logo .lc{fill:var(--hour); opacity:.35}
+.logo .lw{fill:var(--face)}
+.start h1{margin:0; font-size:clamp(28px,8vw,40px); font-weight:800; line-height:1.15; max-width:12em}
+.start h1 span{color:var(--minute)}
+.go{border:0; background:var(--good); color:#fff; font-weight:800; font-size:28px; padding:12px 64px; border-radius:22px; box-shadow:0 6px 0 rgba(0,0,0,.22); margin-top:8px}
+.pause h1{font-size:clamp(32px,9vw,46px); color:var(--good)}
+.pause p{margin:0; font-size:clamp(22px,6vw,28px); font-weight:700; line-height:1.25}
+#confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:60}
+.pause .pstars{display:flex; flex-direction:column; align-items:center; gap:2px; margin:6px 0 4px; padding:12px 22px; border-radius:20px; background:var(--card)}
+.pstars .pbig{display:flex; flex-direction:column; align-items:center; gap:4px}
+.pstars svg{width:40px; height:40px; fill:#F5B800; flex:none}
+.pstars .pmore{font-size:clamp(18px,5vw,22px); font-weight:800; color:var(--good); margin:10px 0}
+.pause .logo{animation-duration:5s}
+.logo .le{stroke:var(--ink); stroke-width:5; fill:none; stroke-linecap:round}
+.go:active{transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,.22)}
+
+
+/* ================= Responsive ================= */
+.start{overflow-y:auto}
+.logo{width:min(56vw,30vh,230px)}
+
+/* Kleine Handys (z. B. iPhone SE): alles etwas kompakter */
+@media (max-height:700px) and (orientation:portrait){
+  .top{padding:8px 0 4px}
+  .modebar{margin-bottom:16px}
+  #clock{width:min(88vw,48vh,440px)}
+  body.mode-read #clock{width:min(80vw,42vh,440px)}
+  .opt{padding:7px 16px}
+  .options{gap:8px}
+  .sheet{padding:16px}
+  .helpsheet .helplogo{width:64px}
+  .helpsheet p{font-size:17px; margin-bottom:8px; line-height:1.4}
+  .digi{--fs:clamp(64px,21vw,100px)}
+}
+
+/* Handy quer: Uhr links, Aufgabe und Knöpfe rechts */
+@media (orientation:landscape) and (max-height:520px){
+  .app{max-width:900px; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto auto auto auto 1fr; column-gap:28px; align-items:start; padding-left:max(16px, env(safe-area-inset-left)); padding-right:max(16px, env(safe-area-inset-right)); padding-bottom:12px}
+  main{display:contents}
+  .top{grid-column:2; grid-row:1; padding:8px 0 4px}
+  .modebar{grid-column:2; grid-row:2; margin-bottom:8px}
+  .task{grid-column:2; grid-row:3; margin-bottom:8px}
+  .clockwrap{grid-column:1; grid-row:1 / 6; align-self:center; margin:0; min-height:100vh; min-height:100dvh}
+  #clock,body.mode-read #clock{width:min(86vh,86dvh,44vw,440px)}
+  .digi{--fs:min(24vh,100px); row-gap:8px; margin:0}
+  .arr{height:44px}
+  #setControls,#options{grid-column:2; grid-row:4}
+  .feedback{grid-column:2; grid-row:5; margin-top:8px}
+  .opt{padding:5px 16px}
+  .opt .ow{font-size:19px}
+  .options{gap:6px}
+  body.mode-read .ask{margin-top:0}
+  .start{flex-direction:row; flex-wrap:wrap; align-content:center; gap:10px 32px}
+  .start > *:not(.logo){flex-basis:100%}
+  .start .logo{width:min(34vh,150px)}
+  .start{display:grid; grid-template-columns:auto auto; justify-content:center; align-content:center; column-gap:32px; row-gap:8px}
+  .start .logo{grid-row:1 / span 6}
+  .start h1{font-size:30px}
+  .pause h1{font-size:34px}
+  .pause p{font-size:20px}
+  .pause .pstars{padding:8px 16px; margin:2px 0}
+  .pstars svg{width:28px; height:28px}
+  dialog{max-height:94vh; max-height:94dvh}
+  .diff{--row:44px}
+  .sheet{padding:14px 18px}
+}
+
+/* Tablet und Laptop: alles größer, damit die Fläche genutzt wird */
+@media (min-width:700px) and (min-height:700px){
+  .app{max-width:760px}
+  .top{padding:20px 0 10px}
+  .help,.gear{width:56px; height:56px}
+  .help{font-size:30px}
+  .gear svg{width:30px; height:30px}
+  .stars{font-size:30px}
+  .stars svg{width:34px; height:34px}
+  .modes button{font-size:22px; padding:10px 30px}
+  .modebar{margin-bottom:30px}
+  .ask{font-size:24px}
+  body.mode-read .ask{font-size:30px}
+  .target{font-size:56px}
+  #clock{width:min(80vw,52vh,600px)}
+  body.mode-read #clock{width:min(80vw,46vh,560px)}
+  .primary{font-size:28px; padding:14px 54px; border-radius:22px}
+  .ghost{font-size:20px; padding:10px 22px}
+  .options{max-width:560px; gap:12px}
+  .opt{padding:12px 24px}
+  .opt .ow{font-size:28px}
+  .feedback{font-size:22px}
+  .feedback.good{font-size:28px}
+  .digi{--fs:150px}
+  .arr{width:104px; height:66px}
+  .arr svg{width:36px; height:36px}
+  dialog{width:min(92vw,520px)}
+  .sheet{padding:26px}
+  .sheet h2{font-size:32px}
+  .helpsheet .helplogo{width:110px}
+  .helpsheet p{font-size:21px}
+  .diff{--row:66px}
+  .dtext b{font-size:21px}
+  .dtext small{font-size:17px}
+  .dend{font-size:19px}
+  legend{font-size:19px}
+  .tog{font-size:20px}
+  .seg button{font-size:20px}
+  .logo{width:min(40vw,30vh,320px)}
+  .start h1{font-size:54px}
+  .go{font-size:36px; padding:16px 80px}
+  .pause h1{font-size:60px}
+  .pause p{font-size:32px}
+  .pstars svg{width:48px; height:48px}
+  .pstars .pmore{font-size:26px}
+}
+
+
+/* Handys mittlerer Höhe: Dialoge kompakter */
+@media (max-height:800px) and (orientation:portrait){
+  .diff{--row:50px}
+  .sheet{padding:16px 18px}
+  .sheet h2{margin-bottom:8px}
+  fieldset{margin-bottom:10px}
+}
+/* Handy quer: Dialoge breiter, Einstellungen zweispaltig */
+@media (orientation:landscape) and (max-height:520px){
+  dialog{width:min(94vw,760px)}
+  .helpsheet .helplogo{display:none}
+  .helpsheet h2{margin-bottom:6px}
+  .helpsheet p{font-size:16px; margin-bottom:6px; line-height:1.35}
+  #settings .sheet{display:grid; grid-template-columns:1fr 1fr; column-gap:28px; align-items:start}
+  #settings .sheet h2{grid-column:1 / -1}
+  #settings .sheet > fieldset:first-of-type{grid-column:1; grid-row:2 / span 3; margin:0}
+  #settings .sheet > fieldset,#settings .sheet > .row{grid-column:2}
+  .diff{--row:40px}
+  .dtext small{display:none}
+}
+/* Laptop mit wenig Höhe (z. B. 1366 x 768) */
+@media (min-width:700px) and (min-height:700px) and (max-height:900px){
+  .top{padding:12px 0 6px}
+  .modebar{margin-bottom:18px}
+  #clock{width:min(80vw,48vh,600px)}
+  body.mode-read #clock{width:min(80vw,40vh,560px)}
+  .opt{padding:8px 22px}
+  .digi{--fs:120px}
+  .arr{height:56px}
+  .diff{--row:50px}
+  .sheet{padding:20px}
+  .helpsheet .helplogo{width:80px}
+  .helpsheet p{font-size:19px; margin-bottom:8px}
+}
+
+
+/* Sehr kleine Handys: Einstellungen ohne Scrollen */
+@media (max-height:700px) and (orientation:portrait){
+  .diff{--row:42px}
+  .dtext b{font-size:17px}
+  .dtext small{font-size:13px}
+  .seg button{padding:7px 10px}
+  .tog{padding:4px 0}
+  .sheet .row{margin-top:8px}
+  .sheet h2{font-size:24px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important; transition:none !important}
+}
+</style>
+</head>
+<body>
+<div class="start" id="start">
+  <svg class="logo" viewBox="0 0 200 210" role="img" aria-label="Urgol, die Uhr">
+    <line class="lt" x1="62" y1="176" x2="48" y2="198"/>
+    <line class="lt" x1="138" y1="176" x2="152" y2="198"/>
+    <circle class="lb" cx="48" cy="46" r="24"/>
+    <circle class="lb" cx="152" cy="46" r="24"/>
+    <circle class="lf" cx="100" cy="112" r="74"/>
+    <line class="lt" x1="100" y1="46" x2="100" y2="58"/>
+    <line class="lt" x1="166" y1="112" x2="154" y2="112"/>
+    <line class="lt" x1="34" y1="112" x2="46" y2="112"/>
+    <line class="lt" x1="100" y1="178" x2="100" y2="166"/>
+    <ellipse class="li" cx="78" cy="100" rx="8" ry="11"/>
+    <ellipse class="li" cx="122" cy="100" rx="8" ry="11"/>
+    <circle class="lw" cx="81" cy="96" r="3"/>
+    <circle class="lw" cx="125" cy="96" r="3"/>
+    <circle class="lc" cx="64" cy="124" r="9"/>
+    <circle class="lc" cx="136" cy="124" r="9"/>
+    <path class="ls" d="M80 128 Q100 148 120 128"/>
+  </svg>
+  <h1>Die Uhr lernen mit <span>Urgol</span></h1>
+  <button class="go" id="go">Los!</button>
+</div>
+<canvas id="confetti" hidden></canvas>
+<div class="start pause" id="pause" hidden>
+  <svg class="logo" viewBox="0 0 200 210" role="img" aria-label="Urgol macht Pause">
+    <line class="lt" x1="62" y1="176" x2="48" y2="198"/>
+    <line class="lt" x1="138" y1="176" x2="152" y2="198"/>
+    <circle class="lb" cx="48" cy="46" r="24"/>
+    <circle class="lb" cx="152" cy="46" r="24"/>
+    <circle class="lf" cx="100" cy="112" r="74"/>
+    <line class="lt" x1="100" y1="46" x2="100" y2="58"/>
+    <line class="lt" x1="166" y1="112" x2="154" y2="112"/>
+    <line class="lt" x1="34" y1="112" x2="46" y2="112"/>
+    <line class="lt" x1="100" y1="178" x2="100" y2="166"/>
+    <path class="le" d="M68 102 Q78 112 88 102"/>
+    <path class="le" d="M112 102 Q122 112 132 102"/>
+    <circle class="lc" cx="64" cy="124" r="9"/>
+    <circle class="lc" cx="136" cy="124" r="9"/>
+    <path class="ls" d="M80 128 Q100 148 120 128"/>
+  </svg>
+  <h1>Das war klasse!</h1>
+  <p class="pstars" id="pauseStars"></p>
+  <p>Mach eine kleine Pause.</p>
+  <p>Wir sehen uns morgen wieder.</p>
+</div>
+<div class="app">
+  <header class="top">
+    <button class="help" id="help" aria-label="Hilfe">?</button>
+    <button class="gear" id="gear" aria-label="Einstellungen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <div class="stars" id="stars" aria-label="Sterne">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      <span id="starCount">0</span>
+    </div>
+  </header>
+  <nav class="modebar">
+    <div class="modes" role="tablist" aria-label="Spielart">
+      <button role="tab" data-mode="set" aria-selected="true">Uhr stellen</button>
+      <button role="tab" data-mode="read" aria-selected="false">Uhr lesen</button>
+    </div>
+  </nav>
+
+  <main>
+    <section class="task">
+      <p class="ask" id="ask">Stell die Uhr auf</p>
+      <p class="target" id="targetWords"></p>
+      <p class="digital" id="targetDigital"></p>
+    </section>
+
+    <div class="clockwrap">
+      <svg id="clock" viewBox="0 0 320 320" tabindex="0" role="img" aria-label="Uhr"></svg>
+      <div class="digi" id="digi" hidden role="group" aria-label="Digitaluhr">
+        <button class="arr hourc up" data-step="h" data-dir="1" aria-label="Stunde höher"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5l9 11H3z"/></svg></button>
+        <button class="arr minc up" data-step="m" data-dir="1" aria-label="Minuten höher"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5l9 11H3z"/></svg></button>
+        <div class="dbox" aria-hidden="true"></div>
+        <div class="dnum hour" id="dH">12</div>
+        <div class="dcolon" aria-hidden="true">:</div>
+        <div class="dnum min" id="dM">00</div>
+        <button class="arr hourc down" data-step="h" data-dir="-1" aria-label="Stunde niedriger"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19L3 8h18z"/></svg></button>
+        <button class="arr minc down" data-step="m" data-dir="-1" aria-label="Minuten niedriger"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19L3 8h18z"/></svg></button>
+      </div>
+    </div>
+
+    <div class="controls" id="setControls">
+      <button class="primary" id="check">Fertig!</button>
+      <button class="ghost" id="skip">Nächste</button>
+      <button class="ghost" id="solve" hidden>Lösung zeigen</button>
+    </div>
+    <div class="options" id="options" hidden></div>
+
+    <p class="feedback" id="feedback" aria-live="polite"></p>
+  </main>
+</div>
+
+<dialog id="helpDlg" aria-labelledby="helpTitle">
+  <div class="sheet helpsheet">
+    <svg class="logo helplogo" viewBox="0 0 200 210" aria-hidden="true">
+    <line class="lt" x1="62" y1="176" x2="48" y2="198"/>
+    <line class="lt" x1="138" y1="176" x2="152" y2="198"/>
+    <circle class="lb" cx="48" cy="46" r="24"/>
+    <circle class="lb" cx="152" cy="46" r="24"/>
+    <circle class="lf" cx="100" cy="112" r="74"/>
+    <line class="lt" x1="100" y1="46" x2="100" y2="58"/>
+    <line class="lt" x1="166" y1="112" x2="154" y2="112"/>
+    <line class="lt" x1="34" y1="112" x2="46" y2="112"/>
+    <line class="lt" x1="100" y1="178" x2="100" y2="166"/>
+    <ellipse class="li" cx="78" cy="100" rx="8" ry="11"/>
+    <ellipse class="li" cx="122" cy="100" rx="8" ry="11"/>
+    <circle class="lw" cx="81" cy="96" r="3"/>
+    <circle class="lw" cx="125" cy="96" r="3"/>
+    <circle class="lc" cx="64" cy="124" r="9"/>
+    <circle class="lc" cx="136" cy="124" r="9"/>
+    <path class="ls" d="M80 128 Q100 148 120 128"/>
+  </svg>
+    <h2 id="helpTitle">So geht's</h2>
+    <p class="only-analog"><b>Uhr stellen:</b> Zieh die Zeiger mit dem Finger auf die Uhrzeit, die oben steht. Dann tipp auf „Fertig!“.</p>
+    <p class="only-analog">Der <b style="color:var(--hour)">kurze orange Zeiger</b> zeigt die Stunde. Der <b style="color:var(--minute)">lange blaue Zeiger</b> zeigt die Minuten.</p>
+    <p class="only-analog">Fange am besten immer mit dem <b style="color:var(--minute)">langen blauen Zeiger</b> an. Das ist einfacher.</p>
+    <p class="only-digital"><b>Uhr stellen:</b> Tipp auf die Pfeile über und unter den Zahlen, bis die Uhrzeit stimmt, die oben steht. Dann tipp auf „Fertig!“.</p>
+    <p class="only-digital">Die <b style="color:var(--hour)">orange Zahl vorne</b> zeigt die Stunde. Die <b style="color:var(--minute)">blaue Zahl hinten</b> zeigt die Minuten.</p>
+    <p class="only-digital">Bei „halb“ und „vor“ nennt man schon die nächste Stunde: „halb vier“ ist 3:30.</p>
+    <p>Für jede richtige Antwort gibt es einen Stern.</p>
+    <p><b>Uhr lesen:</b> Schau auf die Uhr und tipp auf die richtige Uhrzeit.</p>
+    <div class="row"><button class="primary" id="closeHelp">Alles klar</button></div>
+  </div>
+</dialog>
+
+<dialog id="settings" aria-labelledby="setTitle">
+  <div class="sheet">
+    <h2 id="setTitle">Einstellungen</h2>
+    <fieldset>
+      <legend>Wie schwer soll es sein?</legend>
+      <div class="diff" id="diff" role="slider" tabindex="0" aria-orientation="vertical" aria-label="Schwierigkeit" aria-valuemin="1" aria-valuemax="5">
+        <div class="dend easy">Leicht</div>
+        <div class="dtrack" id="dtrack">
+          <div class="drail"><div class="dfill" id="dfill"></div></div>
+          <div class="dthumb" id="dthumb"></div>
+          <div class="dstop"><span class="ddot"></span><span class="dtext"><b>Ganze Stunden</b><small>z. B. drei Uhr</small></span></div>
+          <div class="dstop"><span class="ddot"></span><span class="dtext"><b>Halbe Stunden</b><small>z. B. halb vier</small></span></div>
+          <div class="dstop"><span class="ddot"></span><span class="dtext"><b>Viertelstunden</b><small>z. B. Viertel vor vier</small></span></div>
+          <div class="dstop"><span class="ddot"></span><span class="dtext"><b>5 Minuten</b><small>z. B. zehn nach drei</small></span></div>
+          <div class="dstop"><span class="ddot"></span><span class="dtext"><b>Minutengenau</b><small>z. B. 17 Minuten nach drei</small></span></div>
+        </div>
+        <div class="dend hard">Schwer</div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Welche Uhr?</legend>
+      <div class="seg" id="clockType">
+        <button type="button" data-type="analog">Zeiger-Uhr</button>
+        <button type="button" data-type="digital">Digitaluhr</button>
+      </div>
+    </fieldset>
+    <fieldset class="only-analog">
+      <legend>Hilfen</legend>
+      <label class="tog">Minutenzahlen am Rand<input type="checkbox" id="optMinutes"></label>
+    </fieldset>
+    <div class="row">
+      <button class="ghost" id="resetStars">Sterne zurücksetzen</button>
+      <button class="primary" id="closeSettings">Fertig</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function(){
+  var KEY = 'uhr-lernen-v1';
+  var S = { step: 30, showMinutes: true, showDigital: true, stars: 0 };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || '{}'); if (saved && typeof saved === 'object') Object.assign(S, saved); } catch (e) {}
+  S.showDigital = false;   // Digitalanzeige vorerst aus (kommt später)
+  if (S.clockType !== 'digital') S.clockType = 'analog';
+  function isDigi(){ return S.clockType === 'digital'; }
+  var LV = ['h', 'half', 'q', 'five', 'min'];
+  var LV_MIN = {
+    h: [0], half: [30], q: [15, 45],
+    five: [5, 10, 20, 25, 35, 40, 50, 55],
+    min: (function(){ var a = []; for (var i = 1; i < 60; i++) if (i % 5) a.push(i); return a; })()
+  };
+  if (!S.levels || typeof S.levels !== 'object') {
+    var st0 = [60,30,15,5,1].indexOf(+S.step) >= 0 ? +S.step : 30;
+    S.levels = { h: true, half: st0 <= 30, q: st0 <= 15, five: st0 <= 5, min: st0 <= 1 };
+  }
+  delete S.step;
+  if (!LV.some(function(k){ return S.levels[k]; })) S.levels.h = true;
+  // Regler: eine Stufe schließt alle leichteren mit ein
+  function levelIdx(){ var i = -1; LV.forEach(function(k, j){ if (S.levels[k]) i = j; }); return Math.max(0, i); }
+  function setLevels(i){ S.levels = {}; LV.forEach(function(k, j){ S.levels[k] = j <= i; }); }
+  setLevels(levelIdx());
+  function enabled(){ return LV.filter(function(k){ return S.levels[k]; }); }
+  // feinste aktive Art bestimmt, in welchen Schritten der lange Zeiger einrastet
+  function stepOf(){
+    var l = S.levels;
+    return l.min ? 1 : l.five ? 5 : l.q ? 15 : l.half ? 30 : 60;
+  }
+  function hourOnly(){ var e = enabled(); return e.length === 1 && e[0] === 'h'; }
+  function allowedMinute(m){ return enabled().some(function(k){ return LV_MIN[k].indexOf(m) >= 0; }); }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+  var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $ = function(id){ return document.getElementById(id); };
+  var clock = $('clock'), ask = $('ask'), targetWords = $('targetWords'), targetDigital = $('targetDigital');
+  var setControls = $('setControls'), options = $('options'), feedback = $('feedback');
+  var checkBtn = $('check'), skipBtn = $('skip'), solveBtn = $('solve');
+  var starsEl = $('stars'), starCount = $('starCount');
+  var dlg = $('settings');
+
+  var mode = 'set', t = 0, target = -1, attempts = 0, locked = false;
+  var C = 160, NS = 'http://www.w3.org/2000/svg';
+
+  // ---------- Zeit in Worten ----------
+  var W = ['zwölf','eins','zwei','drei','vier','fünf','sechs','sieben','acht','neun','zehn','elf','zwölf'];
+  function mod(a, n){ return ((a % n) + n) % n; }
+  function disp(tt){ var h = Math.floor(tt / 60) % 12; return h === 0 ? 12 : h; }
+  function words(tt){
+    var h = disp(tt), n = h % 12 + 1, m = tt % 60;
+    switch (m) {
+      case 0:  return (h === 1 ? 'ein' : W[h]) + ' Uhr';
+      case 5:  return 'fünf nach ' + W[h];
+      case 10: return 'zehn nach ' + W[h];
+      case 15: return 'Viertel nach ' + W[h];
+      case 20: return 'zwanzig nach ' + W[h];
+      case 25: return 'fünf vor halb ' + W[n];
+      case 30: return 'halb ' + W[n];
+      case 35: return 'fünf nach halb ' + W[n];
+      case 40: return 'zwanzig vor ' + W[n];
+      case 45: return 'Viertel vor ' + W[n];
+      case 50: return 'zehn vor ' + W[n];
+      case 55: return 'fünf vor ' + W[n];
+    }
+    if (m < 30) return (m === 1 ? 'eine Minute' : m + ' Minuten') + ' nach ' + W[h];
+    var k = 60 - m;
+    return (k === 1 ? 'eine Minute' : k + ' Minuten') + ' vor ' + W[n];
+  }
+  function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+  function digital(tt){ var m = tt % 60; return disp(tt) + ':' + (m < 10 ? '0' : '') + m; }
+
+  // ---------- Uhr zeichnen ----------
+  function el(tag, attrs, parent){
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function pos(angle, r){ var a = angle * Math.PI / 180; return { x: C + r * Math.sin(a), y: C - r * Math.cos(a) }; }
+
+  el('circle', { cx: C, cy: C, r: 132, 'class': 'face' }, clock);
+  var ticks = el('g', {}, clock);
+  // Teilstriche zwischen den Stunden passend zur Schwierigkeit:
+  // volle Stunden und 5 Minuten: keine, halbe: 1, Viertel: 3, minutengenau: 4 (Minutenstriche)
+  function drawTicks(){
+    while (ticks.firstChild) ticks.removeChild(ticks.firstChild);
+    var l = S.levels, fr = [];
+    if (l.min) fr = [1/5, 2/5, 3/5, 4/5];            // klassische Minutenstriche
+    else {
+      if (l.half) fr.push(1/2);                      // halb: Strich in der Mitte
+      if (l.q) fr.push(1/4, 3/4);                    // Viertel: Striche bei 1/4 und 3/4
+    }
+    for (var h = 0; h < 12; h++) {
+      var a0 = h * 30, p1 = pos(a0, 125), p2 = pos(a0, 113);
+      el('line', { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, 'class': 'tick major' }, ticks);
+      fr.forEach(function(f){
+        var a = a0 + f * 30, q1 = pos(a, 125), q2 = pos(a, l.min ? 119 : 117);
+        el('line', { x1: q1.x, y1: q1.y, x2: q2.x, y2: q2.y, 'class': 'tick ' + (l.min ? 'minor' : 'mid') }, ticks);
+      });
+    }
+  }
+  var hourNums = el('g', {}, clock);
+  for (var hN = 1; hN <= 12; hN++) {
+    var hp = pos(hN * 30, 94);
+    var tx = el('text', { x: hp.x, y: hp.y, 'class': 'hn', 'text-anchor': 'middle', 'dominant-baseline': 'central' }, hourNums);
+    tx.textContent = hN;
+  }
+  var minNums = el('g', {}, clock);
+  for (var mN = 0; mN < 60; mN += 5) {
+    var mp = pos(mN * 6, 149);
+    var mt = el('text', { x: mp.x, y: mp.y, 'class': 'mn', 'text-anchor': 'middle', 'dominant-baseline': 'central' }, minNums);
+    mt.textContent = mN;
+  }
+  var hourHand = el('g', {}, clock);
+  el('line', { x1: C, y1: C + 14, x2: C, y2: C - 64, 'class': 'hh' }, hourHand);
+  el('circle', { cx: C, cy: C - 64, r: 9, 'class': 'hk' }, hourHand);
+  var minHand = el('g', {}, clock);
+  el('line', { x1: C, y1: C + 18, x2: C, y2: C - 104, 'class': 'mh' }, minHand);
+  el('circle', { cx: C, cy: C - 104, r: 8, 'class': 'mk' }, minHand);
+  el('circle', { cx: C, cy: C, r: 11, 'class': 'cap' }, clock);
+  el('circle', { cx: C, cy: C, r: 4, 'class': 'capin' }, clock);
+
+  function render(tt){
+    if (tt === undefined) tt = t;
+    var ha = ((tt / 60) % 12) * 30, ma = (tt % 60) * 6;
+    hourHand.setAttribute('transform', 'rotate(' + ha + ' ' + C + ' ' + C + ')');
+    minHand.setAttribute('transform', 'rotate(' + ma + ' ' + C + ' ' + C + ')');
+    clock.setAttribute('aria-label', mode === 'set' ? 'Uhr zeigt ' + words(Math.round(tt) % 720) : 'Uhr');
+    var r = mod(Math.round(tt), 720), m = r % 60;
+    dH.textContent = disp(r);
+    dM.textContent = (m < 10 ? '0' : '') + m;
+  }
+  function face(){ return isDigi() ? digi : clock; }
+
+  function applySettingsView(){
+    document.body.classList.toggle('digimode', isDigi());
+    clock.toggleAttribute('hidden', isDigi()); digi.hidden = !isDigi();
+    digi.classList.toggle('readonly', mode !== 'set');
+    digi.classList.toggle('hourlock', hourOnly());
+    drawTicks();
+    minHand.style.display = hourOnly() ? 'none' : '';
+    minNums.style.display = S.showMinutes && !hourOnly() ? '' : 'none';
+    document.body.classList.toggle('nodigital', !S.showDigital);
+    targetDigital.hidden = mode !== 'set' || !S.showDigital;
+    starCount.textContent = S.stars;
+  }
+
+  // ---------- Aufgaben ----------
+  function rand(n){ return Math.floor(Math.random() * n); }
+  function randTime(){ var e = enabled(), list = LV_MIN[e[rand(e.length)]]; return rand(12) * 60 + list[rand(list.length)]; }
+  function shuffle(a){ for (var i = a.length - 1; i > 0; i--) { var j = rand(i + 1), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+
+  function newTask(){
+    attempts = 0; locked = false;
+    solveBtn.hidden = true;
+    feedback.textContent = ''; feedback.className = 'feedback';
+    clock.classList.remove('win'); digi.classList.remove('win');
+    var tgt, guard = 0;
+    do { tgt = randTime(); guard++; } while ((tgt === t || tgt === target) && guard < 50);
+    target = tgt;
+    if (mode === 'set') {
+      ask.textContent = 'Stell die Uhr auf';
+      targetWords.textContent = cap(words(target));
+      targetWords.hidden = false;
+      targetDigital.textContent = digital(target);
+      setControls.hidden = false; options.hidden = true;
+      clock.classList.add('interactive');
+    } else {
+      t = target;
+      ask.textContent = 'Wie spät ist es?';
+      targetWords.hidden = true;
+      setControls.hidden = true; options.hidden = false;
+      clock.classList.remove('interactive');
+      buildOptions();
+    }
+    document.body.classList.toggle('mode-read', mode === 'read');
+    applySettingsView();
+    render();
+  }
+
+  function buildOptions(){
+    var st = stepOf();
+    var cands = [target - 60, target + 60, target + st, target - st, target + 120, target + 30, target - 30];
+    var seen = {}; seen[target] = 1;
+    var pool = [];
+    shuffle(cands).forEach(function(c){ c = mod(c, 720); if (!seen[c] && allowedMinute(c % 60)) { seen[c] = 1; pool.push(c); } });
+    var picks = pool.slice(0, 2);
+    while (picks.length < 2) { var r = randTime(); if (!seen[r]) { seen[r] = 1; picks.push(r); } }
+    picks.push(target);
+    options.innerHTML = '';
+    shuffle(picks).forEach(function(v){
+      var b = document.createElement('button');
+      b.className = 'opt';
+      b.innerHTML = '<span class="ow">' + cap(words(v)) + '</span><span class="od">' + digital(v) + '</span>';
+      b.addEventListener('click', function(){
+        if (locked || b.disabled) return;
+        if (v === target) { b.classList.add('right'); win(); }
+        else {
+          b.classList.add('wrong'); b.disabled = true; attempts++;
+          feedback.className = 'feedback';
+          feedback.textContent = isDigi()
+            ? (attempts === 1
+              ? 'Nicht ganz. Die orange Zahl vorne ist die Stunde, die blaue hinten sind die Minuten.'
+              : 'Tipp: Bei „halb“ und „vor“ sagt man schon die nächste Stunde. 3:30 ist „halb vier“.')
+            : hourOnly()
+            ? 'Nicht ganz. Auf welche Zahl zeigt der Zeiger?'
+            : attempts === 1
+            ? 'Nicht ganz. Schau zuerst auf den langen blauen Zeiger.'
+            : 'Der kurze orange Zeiger zeigt die Stunde. Probier die letzte!';
+        }
+      });
+      options.appendChild(b);
+    });
+  }
+
+  function win(){
+    locked = true;
+    S.stars++; save();
+    if (T) { T.stars = (T.stars || 0) + 1; saveT(); }
+    starCount.textContent = S.stars;
+    starsEl.classList.remove('pop'); void starsEl.offsetWidth; starsEl.classList.add('pop');
+    face().classList.add('win');
+    feedback.className = 'feedback good';
+    feedback.textContent = S.stars % 10 === 0
+      ? 'Wow, schon ' + S.stars + ' Sterne!'
+      : 'Super! ' + cap(words(target)) + '.';
+    setTimeout(newTask, 1600);
+  }
+
+  function check(){
+    if (locked || mode !== 'set') return;
+    if (t === target) { win(); return; }
+    attempts++;
+    var minOk = t % 60 === target % 60;
+    var hourOk = Math.floor(t / 60) === Math.floor(target / 60);
+    var msg;
+    if (isDigi()) msg = digiHint(minOk, hourOk);
+    else if (hourOnly()) {
+      msg = 'Noch nicht ganz. Der Zeiger muss genau auf die ' + disp(target) + ' zeigen.';
+    } else if (minOk && !hourOk) {
+      msg = 'Der lange Zeiger passt! Jetzt noch der kurze.';
+      if (target % 60 !== 0) {
+        var h = disp(target), n = h % 12 + 1;
+        msg += ' Er steht zwischen der ' + h + ' und der ' + n + '.';
+      }
+    } else if (hourOk && !minOk) {
+      msg = 'Der kurze Zeiger passt! Schau nochmal auf den langen.';
+    } else {
+      msg = 'Noch nicht ganz. Fang mit dem langen blauen Zeiger an.';
+    }
+    feedback.className = 'feedback';
+    feedback.textContent = msg;
+    var f = face(); f.classList.remove('shake'); void f.getBoundingClientRect(); f.classList.add('shake');
+    if (attempts >= 2) solveBtn.hidden = false;
+  }
+
+  function digiHint(minOk, hourOk){
+    var tm = target % 60, th = disp(target), next = th % 12 + 1;
+    if (hourOnly()) return 'Noch nicht ganz. Vorne muss die ' + th + ' stehen.';
+    if (minOk && !hourOk) {
+      if (tm >= 25 && disp(t) === next)
+        return 'Fast! Bei „' + words(target) + '“ ist die ' + next + ' noch nicht erreicht. Vorne steht also noch die ' + th + '.';
+      return 'Die Minuten passen! Jetzt noch die Stunde vorne.';
+    }
+    if (hourOk && !minOk) {
+      var tip = { 15: ' Viertel nach heißt 15 Minuten.', 30: ' Halb heißt 30 Minuten.', 45: ' Viertel vor heißt 45 Minuten.' }[tm] || '';
+      return 'Die Stunde passt! Schau nochmal auf die Minuten.' + tip;
+    }
+    if (tm >= 25 && disp(t) === next) return 'Achtung: Bei „' + words(target) + '“ steht vorne noch die ' + th + '.';
+    return 'Noch nicht ganz. Fang mit der Stunde vorne an.';
+  }
+
+  // ---------- Pfeile der Digitaluhr ----------
+  var digi = $('digi'), dH = $('dH'), dM = $('dM'), rep0 = null, rep1 = null;
+  function stepDigi(kind, dir){
+    if (mode !== 'set' || locked) return;
+    if (kind === 'h') t = mod(t + dir * 60, 720);
+    else { var st = stepOf(), m = mod(Math.round((t % 60) / st) * st + dir * st, 60); t = t - (t % 60) + m; }
+    if (feedback.className === 'feedback') feedback.textContent = '';
+    render();
+  }
+  function stopRepeat(){ clearTimeout(rep0); clearInterval(rep1); rep0 = rep1 = null; }
+  digi.querySelectorAll('.arr').forEach(function(b){
+    var kind = b.dataset.step, dir = +b.dataset.dir;
+    b.addEventListener('pointerdown', function(e){
+      e.preventDefault(); stopRepeat();
+      stepDigi(kind, dir);
+      rep0 = setTimeout(function(){ rep1 = setInterval(function(){ stepDigi(kind, dir); }, 110); }, 420);   // gedrückt halten = schnell weiter
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(ev){ b.addEventListener(ev, stopRepeat); });
+    b.addEventListener('click', function(e){ if (e.detail === 0) stepDigi(kind, dir); });   // Tastatur
+  });
+
+  function animateTo(to, done){
+    var from = t, d = mod(to - from, 720);
+    if (d > 360) d -= 720;
+    if (reduced || d === 0 || isDigi()) { t = to; render(); done(); return; }
+    var start = performance.now(), dur = 1100;
+    (function step(now){
+      var k = Math.min(1, (now - start) / dur), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      render(mod(from + d * e, 720));
+      if (k < 1) requestAnimationFrame(step); else { t = to; render(); done(); }
+    })(start);
+  }
+
+  // ---------- Zeiger ziehen ----------
+  var drag = null, lastA = 0, acc = 0;
+  function norm(x, p){ return mod(x + p / 2, p) - p / 2; }
+  function pt(e){
+    var r = clock.getBoundingClientRect();
+    var x = (e.clientX - r.left) / r.width * 320 - C;
+    var y = (e.clientY - r.top) / r.height * 320 - C;
+    return { a: mod(Math.atan2(x, -y) * 180 / Math.PI, 360), r: Math.hypot(x, y) };
+  }
+  function pickHand(a, r){
+    if (stepOf() === 60) return 'h';
+    var ha = ((t / 60) % 12) * 30, ma = (t % 60) * 6;
+    var dh = Math.abs(norm(a - ha, 360)), dm = Math.abs(norm(a - ma, 360));
+    if (dh < 30 && dm < 30) return r < 78 ? 'h' : 'm';
+    return dh < dm ? 'h' : 'm';
+  }
+  function applyDrag(){
+    if (drag === 'm') {
+      var st = stepOf(); t = mod(Math.round(acc / st) * st, 720);
+    } else {
+      var m = t % 60, h = Math.round(acc / 30 - m / 60);
+      t = mod(h * 60 + m, 720);
+    }
+    render();
+  }
+  clock.addEventListener('pointerdown', function(e){
+    if (mode !== 'set' || locked) return;
+    var p = pt(e);
+    if (p.r < 12 || p.r > 165) return;
+    drag = pickHand(p.a, p.r);
+    lastA = p.a;
+    if (drag === 'm') acc = t + norm(p.a / 6 - (t % 60), 60);
+    else { var ha = ((t / 60) % 12) * 30; acc = ha + norm(p.a - ha, 360); }
+    try { clock.setPointerCapture(e.pointerId); } catch (err) {}
+    clock.classList.add('dragging');
+    if (feedback.className === 'feedback') feedback.textContent = '';
+    applyDrag();
+    e.preventDefault();
+  });
+  clock.addEventListener('pointermove', function(e){
+    if (!drag) return;
+    var p = pt(e), da = norm(p.a - lastA, 360);
+    lastA = p.a;
+    acc += drag === 'm' ? da / 6 : da;
+    applyDrag();
+  });
+  function endDrag(){ drag = null; clock.classList.remove('dragging'); }
+  clock.addEventListener('pointerup', endDrag);
+  clock.addEventListener('pointercancel', endDrag);
+
+  clock.addEventListener('keydown', function(e){
+    if (mode !== 'set' || locked) return;
+    var st = stepOf(), map = { ArrowRight: st, ArrowLeft: -st, ArrowUp: 60, ArrowDown: -60 };
+    if (map[e.key] !== undefined) { t = mod(t + map[e.key], 720); render(); e.preventDefault(); }
+    else if (e.key === 'Enter') { check(); e.preventDefault(); }
+  });
+
+  // ---------- Bedienung ----------
+  checkBtn.addEventListener('click', check);
+  skipBtn.addEventListener('click', function(){ if (!locked) newTask(); });
+  solveBtn.addEventListener('click', function(){
+    if (locked) return;
+    locked = true; solveBtn.hidden = true;
+    animateTo(target, function(){
+      feedback.className = 'feedback';
+      feedback.textContent = 'So sieht ' + words(target) + ' aus. Gleich kommt die nächste!';
+      setTimeout(newTask, 2600);
+    });
+  });
+
+  document.querySelectorAll('.modes button').forEach(function(b){
+    b.addEventListener('click', function(){
+      if (mode === b.dataset.mode) return;
+      mode = b.dataset.mode;
+      document.querySelectorAll('.modes button').forEach(function(x){ x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
+      if (mode === 'set') t = 0;
+      newTask();
+    });
+  });
+
+  // ---------- Einstellungen ----------
+  var diff = $('diff'), dtrack = $('dtrack'), dfill = $('dfill'), dthumb = $('dthumb');
+  var dstops = diff.querySelectorAll('.dstop');
+  var NAMES = ['Ganze Stunden', 'Halbe Stunden', 'Viertelstunden', '5 Minuten', 'Minutengenau'];
+  var shown = 0;
+  function drawDiff(i){
+    shown = i;
+    var row = dstops[0].offsetHeight || 58;
+    dthumb.style.top = (row / 2 + i * row - 18) + 'px';
+    dfill.style.height = (i * row) + 'px';
+    dstops.forEach(function(d, j){
+      d.classList.toggle('on', j <= i);
+      d.classList.toggle('off', j > i);
+      d.classList.toggle('cur', j === i);
+    });
+    diff.setAttribute('aria-valuenow', i + 1);
+    diff.setAttribute('aria-valuetext', NAMES[i]);
+  }
+  function chooseLevel(i){
+    i = Math.max(0, Math.min(LV.length - 1, i));
+    drawDiff(i);
+    if (i === levelIdx()) return;
+    setLevels(i); save();
+    var st = stepOf();
+    t = mod(Math.round(t / st) * st, 720);
+    newTask();
+  }
+  function idxAt(y){
+    var r = dtrack.getBoundingClientRect(), row = r.height / LV.length;
+    return Math.max(0, Math.min(LV.length - 1, Math.floor((y - r.top) / row)));
+  }
+  var ddrag = false;
+  diff.addEventListener('pointerdown', function(e){
+    if (!dtrack.contains(e.target)) return;
+    ddrag = true; diff.classList.add('dragging');
+    try { diff.setPointerCapture(e.pointerId); } catch (err) {}
+    drawDiff(idxAt(e.clientY));
+    e.preventDefault();
+  });
+  diff.addEventListener('pointermove', function(e){ if (ddrag) { var i = idxAt(e.clientY); if (i !== shown) drawDiff(i); } });
+  function endD(){ if (!ddrag) return; ddrag = false; diff.classList.remove('dragging'); chooseLevel(shown); }
+  diff.addEventListener('pointerup', endD);
+  diff.addEventListener('pointercancel', endD);
+  diff.addEventListener('keydown', function(e){
+    var d = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+    if (e.key === 'Home') { chooseLevel(0); e.preventDefault(); }
+    else if (e.key === 'End') { chooseLevel(LV.length - 1); e.preventDefault(); }
+    else if (d) { chooseLevel(levelIdx() + d); e.preventDefault(); }
+  });
+  var optMinutes = $('optMinutes');
+  $('gear').addEventListener('click', function(){
+    optMinutes.checked = S.showMinutes;
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+    drawDiff(levelIdx());
+  });
+  function closeDlg(){
+    [dlg, helpDlg].forEach(function(d){ if (d.close) d.close(); else d.removeAttribute('open'); });
+  }
+  var helpDlg = $('helpDlg');
+  $('help').addEventListener('click', function(){ if (helpDlg.showModal) helpDlg.showModal(); else helpDlg.setAttribute('open', ''); });
+  $('closeHelp').addEventListener('click', closeDlg);
+  helpDlg.addEventListener('click', function(e){ if (e.target === helpDlg) closeDlg(); });
+  $('closeSettings').addEventListener('click', closeDlg);
+  dlg.addEventListener('click', function(e){ if (e.target === dlg) closeDlg(); });
+  var typeBtns = document.querySelectorAll('#clockType button');
+  function drawType(){ typeBtns.forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.type === S.clockType ? 'true' : 'false'); }); }
+  typeBtns.forEach(function(b){
+    b.addEventListener('click', function(){
+      if (S.clockType === b.dataset.type) return;
+      S.clockType = b.dataset.type; save(); drawType();
+      newTask();
+    });
+  });
+  drawType();
+  optMinutes.addEventListener('change', function(){ S.showMinutes = optMinutes.checked; save(); applySettingsView(); });
+  $('resetStars').addEventListener('click', function(){ S.stars = 0; save(); applySettingsView(); });
+
+  // ---------- Spielzeit pro Tag ----------
+  var LIMIT = 15 * 60;                  // Sekunden Spielzeit pro Tag (15 Minuten)
+  var TKEY = 'uhr-lernen-zeit';
+  function today(){ var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  var PKEY = 'uhr-lernen-letzte-runde';   // Sterne des letzten Spieltags
+  var T = { day: today(), used: 0, done: false, stars: 0 };
+  var prev = null;
+  try { prev = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (e) {}
+  // Neuer Tag: den gespeicherten Tag als "letzte Runde" merken (nur wenn gespielt wurde)
+  function rollDay(old){
+    if (old && old.day !== today() && (old.used > 0 || old.stars > 0)) {
+      prev = { day: old.day, stars: old.stars || 0 };
+      try { localStorage.setItem(PKEY, JSON.stringify(prev)); } catch (e) {}
+    }
+  }
+  try {
+    var tv = JSON.parse(localStorage.getItem(TKEY) || 'null');
+    if (tv && tv.day === T.day) { T = tv; if (typeof T.stars !== 'number') T.stars = 0; }
+    else rollDay(tv);
+  } catch (e) {}
+  function saveT(){ try { localStorage.setItem(TKEY, JSON.stringify(T)); } catch (e) {} }
+
+  var startEl = $('start'), pauseEl = $('pause'), timer = null;
+
+  // ---------- Konfetti ----------
+  function confetti(){
+    if (reduced) return;
+    var cv = $('confetti'), cx = cv.getContext && cv.getContext('2d');
+    if (!cx) return;
+    cv.hidden = false;
+    var dpr = window.devicePixelRatio || 1, W2, H2;
+    function size(){ W2 = innerWidth; H2 = innerHeight; cv.width = W2 * dpr; cv.height = H2 * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+    size(); addEventListener('resize', size);
+    var cols = ['#EE7A16', '#2F6FDB', '#228F55', '#F5B800', '#E2457A', '#8B5CF6', '#14B8A6'];
+    var bits = [], t0 = performance.now(), SPAWN = 7000;
+    function add(y){
+      bits.push({ x: Math.random() * W2, y: y, w: 6 + Math.random() * 6, h: 8 + Math.random() * 8,
+        vy: 1.2 + Math.random() * 1.6, vx: -0.6 + Math.random() * 1.2, r: Math.random() * 6.28,
+        vr: -0.12 + Math.random() * 0.24, sw: Math.random() * 6.28, c: cols[Math.floor(Math.random() * cols.length)],
+        round: Math.random() < 0.3 });
+    }
+    for (var i = 0; i < 90; i++) add(-Math.random() * H2);   // erster Schwung
+    (function frame(now){
+      var el = now - t0;
+      if (el < SPAWN && bits.length < 220) for (var k = 0; k < 3; k++) add(-20);
+      cx.clearRect(0, 0, W2, H2);
+      bits = bits.filter(function(b){
+        b.sw += 0.04; b.x += b.vx + Math.sin(b.sw) * 0.8; b.y += b.vy; b.r += b.vr;
+        cx.save(); cx.translate(b.x, b.y); cx.rotate(b.r); cx.fillStyle = b.c;
+        if (b.round) { cx.beginPath(); cx.arc(0, 0, b.w / 2, 0, 6.28); cx.fill(); }
+        else cx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h * Math.abs(Math.cos(b.sw)) + 2);
+        cx.restore();
+        return b.y < H2 + 30;
+      });
+      if (bits.length) requestAnimationFrame(frame); else cv.hidden = true;
+    })(t0);
+  }
+  function showPause(){
+    if (timer) { clearInterval(timer); timer = null; }
+    drag = null; locked = true;
+    closeDlg();
+    startEl.hidden = true;
+    var x = T.stars || 0;
+    var star = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+    var html = '<span class="pbig">' + star + '<span>Du hast heute ' + x + (x === 1 ? ' Stern' : ' Sterne') + ' gesammelt.</span></span>';
+    // Vergleich nur zeigen, wenn es heute mehr waren (nie demotivieren)
+    var better = prev && x > prev.stars;
+    if (better) html += '<span class="pmore">' + (x - prev.stars) + ' mehr als beim letzten Mal!</span>';
+    $('pauseStars').innerHTML = html;
+    pauseEl.hidden = false;
+    if (better) confetti();
+  }
+  function startTimer(){
+    if (timer) return;
+    timer = setInterval(function(){
+      if (T.day !== today()) { rollDay(T); T = { day: today(), used: 0, done: false, stars: 0 }; }
+      if (document.hidden) return;      // läuft nur, solange die Seite sichtbar ist
+      T.used++;
+      if (T.used >= LIMIT) T.done = true;
+      saveT();
+      if (T.done) showPause();
+    }, 1000);
+  }
+
+  $('go').addEventListener('click', function(){
+    startEl.classList.add('gone');
+    setTimeout(function(){ startEl.hidden = true; }, reduced ? 0 : 360);
+    startTimer();
+  });
+  if (T.done) showPause();
+
+  newTask();
+})();
+</script>
+<script>
+// Offline-Unterstützung: App-Dateien im Gerät speichern
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}
+</script>
+</body>
+</html>

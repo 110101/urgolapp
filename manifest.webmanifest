@@ -1,0 +1,17 @@
+{
+  "name": "Die Uhr lernen mit Urgol",
+  "short_name": "Urgol",
+  "description": "Die Uhr lernen mit Urgol: Zeiger-Uhr und Digitaluhr spielerisch üben.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#DCEFF7",
+  "theme_color": "#DCEFF7",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
