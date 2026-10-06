@@ -22,6 +22,7 @@ Learning the watch for Kids in the age of 5 till 8 years.
 | `manifest.webmanifest` | App-Name, Farben und Icons für den Home-Bildschirm |
 | `sw.js` | Service Worker für den Offline-Betrieb |
 | `icons/` | Urgol-Icons (`urgol.svg` ist die Vorlage) |
+| `fonts/` | Schrift „Baloo 2“ lokal (lateinischer Zeichensatz), Lizenz in `fonts/OFL.txt` |
 
 ## Auf dem Handy installieren
 
@@ -36,4 +37,8 @@ Learning the watch for Kids in the age of 5 till 8 years.
 - **Spielzeit:** in `index.html` die Zeile `var LIMIT = 10 * 60;` (Sekunden).
 - **Nach Änderungen** in `sw.js` die Version erhöhen (`urgol-v1` → `urgol-v2`), damit installierte Apps das Update laden.
 
-Sterne, Einstellungen und Spielzeit werden nur lokal im Browser des jeweiligen Geräts gespeichert.
+Sterne, Einstellungen und Spielzeit werden nur lokal im Browser des jeweiligen Geräts gespeichert. Die App lädt nichts von fremden Servern (auch keine Google Fonts).
+
+## Schrift
+
+„Baloo 2“ von Ek Type steht unter der SIL Open Font License 1.1 (`fonts/OFL.txt`). Die Datei ist aus dem offiziellen Repository [google/fonts](https://github.com/google/fonts/tree/main/ofl/baloo2) auf lateinische Zeichen reduziert und als WOFF gespeichert.

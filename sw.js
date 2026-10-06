@@ -1,5 +1,5 @@
 // Urgol – Offline-Speicher. Bei Änderungen an der App die Versionsnummer erhöhen.
-const VERSION = 'urgol-v3';
+const VERSION = 'urgol-v4';
 const APP_FILES = [
   './',
   './index.html',
@@ -7,7 +7,8 @@ const APP_FILES = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/maskable-512.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon.png',
+  './fonts/Baloo2-latin.woff'
 ];
 
 self.addEventListener('install', (event) => {
@@ -16,7 +17,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION && k !== 'urgol-fonts').map((k) => caches.delete(k))))
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -25,17 +26,6 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-
-  // Schrift von Google Fonts: einmal laden, dann offline aus dem Speicher
-  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
-    event.respondWith(
-      caches.open('urgol-fonts').then((c) => c.match(req).then((hit) => {
-        const net = fetch(req).then((res) => { if (res.ok || res.type === 'opaque') c.put(req, res.clone()); return res; }).catch(() => hit);
-        return hit || net;
-      }))
-    );
-    return;
-  }
 
   if (url.origin !== location.origin) return;
 
