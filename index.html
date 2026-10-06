@@ -147,6 +147,8 @@ dialog{border:0; padding:0; border-radius:24px; background:var(--card); color:va
 dialog::backdrop{background:rgba(8,16,36,.5)}
 .sheet{padding:20px}
 .sheet h2{margin:0 0 12px; font-size:26px; line-height:1.2}
+/* Beim Öffnen liegt der Fokus unsichtbar auf der Überschrift statt auf dem Regler */
+.sheet h2:focus{outline:none}
 fieldset{border:0; padding:0; margin:0 0 14px}
 .helpsheet .helplogo{display:block; width:84px; margin:0 auto 4px}
 .helpsheet h2{text-align:center}
@@ -479,7 +481,7 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
     <circle class="lc" cx="136" cy="124" r="9"/>
     <path class="ls" d="M80 128 Q100 148 120 128"/>
   </svg>
-    <h2 id="helpTitle">So geht's</h2>
+    <h2 id="helpTitle" tabindex="-1" autofocus>So geht's</h2>
     <p class="only-analog"><b>Uhr stellen:</b> Zieh die Zeiger mit dem Finger auf die Uhrzeit, die oben steht. Dann tipp auf „Fertig!“.</p>
     <p class="only-analog">Der <b style="color:var(--hour)">kurze orange Zeiger</b> zeigt die Stunde. Der <b style="color:var(--minute)">lange blaue Zeiger</b> zeigt die Minuten.</p>
     <p class="only-analog">Fange am besten immer mit dem <b style="color:var(--minute)">langen blauen Zeiger</b> an. Das ist einfacher.</p>
@@ -494,7 +496,7 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
 
 <dialog id="settings" aria-labelledby="setTitle">
   <div class="sheet">
-    <h2 id="setTitle">Einstellungen</h2>
+    <h2 id="setTitle" tabindex="-1" autofocus>Einstellungen</h2>
     <fieldset>
       <legend>Wie schwer soll es sein?</legend>
       <div class="diff" id="diff" role="slider" tabindex="0" aria-orientation="vertical" aria-label="Schwierigkeit" aria-valuemin="1" aria-valuemax="5">
@@ -975,12 +977,13 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
     optMinutes.checked = S.showMinutes;
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
     drawDiff(levelIdx());
+    $('setTitle').focus({ preventScroll: true });   // kein Fokusrahmen am Regler
   });
   function closeDlg(){
     [dlg, helpDlg].forEach(function(d){ if (d.close) d.close(); else d.removeAttribute('open'); });
   }
   var helpDlg = $('helpDlg');
-  $('help').addEventListener('click', function(){ if (helpDlg.showModal) helpDlg.showModal(); else helpDlg.setAttribute('open', ''); });
+  $('help').addEventListener('click', function(){ if (helpDlg.showModal) helpDlg.showModal(); else helpDlg.setAttribute('open', ''); $('helpTitle').focus({ preventScroll: true }); });
   $('closeHelp').addEventListener('click', closeDlg);
   helpDlg.addEventListener('click', function(e){ if (e.target === helpDlg) closeDlg(); });
   $('closeSettings').addEventListener('click', closeDlg);
