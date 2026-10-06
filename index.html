@@ -14,10 +14,16 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Urgol">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/Baloo2-latin.woff" as="font" type="font/woff" crossorigin>
 <style>
+/* Schrift "Baloo 2" lokal eingebunden (keine Verbindung zu Google). Lizenz: fonts/OFL.txt */
+@font-face{
+  font-family:"Baloo 2";
+  src:url("fonts/Baloo2-latin.woff") format("woff");
+  font-weight:400 800;
+  font-style:normal;
+  font-display:swap;
+}
 :root{
   --bg:#DCEFF7; --ink:#1F2B4D; --muted:#56648A; --face:#FFFFFF; --card:#FFFFFF;
   --hour:#EE7A16; --minute:#2F6FDB; --good:#228F55; --bad:#D9483B; --line:#B7D3E2;
@@ -331,8 +337,10 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
   .opt{padding:8px 22px}
   .digi{--fs:120px}
   .arr{height:56px}
-  .diff{--row:50px}
-  .sheet{padding:20px}
+  .diff{--row:44px}
+  .sheet{padding:18px 20px}
+  .sheet h2{font-size:28px; margin-bottom:6px}
+  fieldset{margin-bottom:10px}
   .helpsheet .helplogo{width:80px}
   .helpsheet p{font-size:19px; margin-bottom:8px}
 }
@@ -346,7 +354,8 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
   .seg button{padding:7px 10px}
   .tog{padding:4px 0}
   .sheet .row{margin-top:8px}
-  .sheet h2{font-size:24px}
+  .sheet h2{font-size:24px; margin-bottom:4px}
+  fieldset{margin-bottom:8px}
 }
 
 @media (prefers-reduced-motion:reduce){
