@@ -1,5 +1,5 @@
 // Urgol – Offline-Speicher. Bei Änderungen an der App die Versionsnummer erhöhen.
-const VERSION = 'urgol-v2';
+const VERSION = 'urgol-v3';
 const APP_FILES = [
   './',
   './index.html',
