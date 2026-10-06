@@ -10,7 +10,7 @@ Learning the watch for Kids in the age of 5 till 8 years.
 - **Uhr lesen:** Uhrzeit ablesen und aus drei Antworten die richtige wählen.
 - **Schwierigkeit per Schieberegler:** ganze Stunden → halbe Stunden → Viertelstunden → 5 Minuten → minutengenau.
 - **Gezielte Tipps** bei Fehlern, z. B. „halb vier“ = 3:30.
-- **Sterne** für jede richtige Antwort, Vergleich mit dem letzten Spieltag und Konfetti bei Verbesserung.
+- **Sterne** für jede richtige Antwort: oben steht die Zahl von heute, sie startet mit jedem neuen Spieltag bei 0. Auf der Pausenseite gibt es den Vergleich mit dem letzten Spieltag und Konfetti bei Verbesserung.
 - **Spielzeit-Limit:** 10 Minuten pro Tag, danach macht Urgol Pause bis morgen.
 - **Hell- und Dunkelmodus**, passend für Handy, Tablet und Laptop.
 

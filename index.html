@@ -145,7 +145,7 @@ fieldset{border:0; padding:0; margin:0 0 14px}
 .helpsheet .helplogo{display:block; width:84px; margin:0 auto 4px}
 .helpsheet h2{text-align:center}
 .helpsheet p{margin:0 0 10px; font-size:18px; line-height:1.45}
-.sheet.helpsheet .row{justify-content:center}
+.sheet.helpsheet .row,#settings .sheet .row{justify-content:center}
 /* Schwierigkeits-Regler */
 .diff{--row:58px; --dot:64px; user-select:none; -webkit-user-select:none; touch-action:none; border-radius:16px; padding:2px 0}
 .dend{width:var(--dot); text-align:center; font-weight:800; font-size:16px; line-height:1.2; color:var(--muted)}
@@ -514,7 +514,6 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
       <label class="tog">Minutenzahlen am Rand<input type="checkbox" id="optMinutes"></label>
     </fieldset>
     <div class="row">
-      <button class="ghost" id="resetStars">Sterne zurücksetzen</button>
       <button class="primary" id="closeSettings">Fertig</button>
     </div>
   </div>
@@ -560,6 +559,13 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
   var setControls = $('setControls'), options = $('options'), feedback = $('feedback');
   var checkBtn = $('check'), skipBtn = $('skip'), solveBtn = $('solve');
   var starsEl = $('stars'), starCount = $('starCount');
+  // Oben rechts stehen die Sterne von heute
+  function todayStars(){ return (typeof T === 'object' && T && T.stars) || 0; }
+  function showStars(){
+    var n = todayStars();
+    starCount.textContent = n;
+    starsEl.setAttribute('aria-label', 'Heute ' + n + (n === 1 ? ' Stern' : ' Sterne'));
+  }
   var dlg = $('settings');
 
   var mode = 'set', t = 0, target = -1, attempts = 0, locked = false;
@@ -665,7 +671,7 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
     minNums.style.display = S.showMinutes && !hourOnly() ? '' : 'none';
     document.body.classList.toggle('nodigital', !S.showDigital);
     targetDigital.hidden = mode !== 'set' || !S.showDigital;
-    starCount.textContent = S.stars;
+    showStars();
   }
 
   // ---------- Aufgaben ----------
@@ -738,14 +744,14 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
 
   function win(){
     locked = true;
-    S.stars++; save();
-    if (T) { T.stars = (T.stars || 0) + 1; saveT(); }
-    starCount.textContent = S.stars;
+    S.stars++; save();                                   // Gesamtzahl (bleibt erhalten)
+    if (T) { T.stars = (T.stars || 0) + 1; saveT(); }   // Sterne von heute
+    showStars();
     starsEl.classList.remove('pop'); void starsEl.offsetWidth; starsEl.classList.add('pop');
     face().classList.add('win');
     feedback.className = 'feedback good';
-    feedback.textContent = S.stars % 10 === 0
-      ? 'Wow, schon ' + S.stars + ' Sterne!'
+    feedback.textContent = todayStars() % 10 === 0
+      ? 'Wow, heute schon ' + todayStars() + ' Sterne!'
       : 'Super! ' + cap(words(target)) + '.';
     setTimeout(newTask, 1600);
   }
@@ -981,7 +987,6 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
   });
   drawType();
   optMinutes.addEventListener('change', function(){ S.showMinutes = optMinutes.checked; save(); applySettingsView(); });
-  $('resetStars').addEventListener('click', function(){ S.stars = 0; save(); applySettingsView(); });
 
   // ---------- Spielzeit pro Tag ----------
   var LIMIT = 10 * 60;                  // Sekunden Spielzeit pro Tag (10 Minuten)
@@ -1058,12 +1063,13 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
   function startTimer(){
     if (timer) return;
     timer = setInterval(function(){
-      if (T.day !== today()) { rollDay(T); T = { day: today(), used: 0, done: false, stars: 0 }; }
+      if (T.day !== today()) { rollDay(T); T = { day: today(), used: 0, done: false, stars: 0 }; showStars(); }
       if (document.hidden) return;      // läuft nur, solange die Seite sichtbar ist
       T.used++;
       if (T.used >= LIMIT) T.done = true;
       saveT();
-      if (T.done) showPause();
+      showStars();
+  if (T.done) showPause();
     }, 1000);
   }
 
