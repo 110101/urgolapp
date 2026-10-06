@@ -11,7 +11,7 @@ Learning the watch for Kids in the age of 5 till 8 years.
 - **Schwierigkeit per Schieberegler:** ganze Stunden → halbe Stunden → Viertelstunden → 5 Minuten → minutengenau.
 - **Gezielte Tipps** bei Fehlern, z. B. „halb vier“ = 3:30.
 - **Sterne** für jede richtige Antwort, Vergleich mit dem letzten Spieltag und Konfetti bei Verbesserung.
-- **Spielzeit-Limit:** 15 Minuten pro Tag, danach macht Urgol Pause bis morgen.
+- **Spielzeit-Limit:** 10 Minuten pro Tag, danach macht Urgol Pause bis morgen.
 - **Hell- und Dunkelmodus**, passend für Handy, Tablet und Laptop.
 
 ## Dateien
@@ -33,7 +33,7 @@ Learning the watch for Kids in the age of 5 till 8 years.
 
 ## Anpassen
 
-- **Spielzeit:** in `index.html` die Zeile `var LIMIT = 15 * 60;` (Sekunden).
+- **Spielzeit:** in `index.html` die Zeile `var LIMIT = 10 * 60;` (Sekunden).
 - **Nach Änderungen** in `sw.js` die Version erhöhen (`urgol-v1` → `urgol-v2`), damit installierte Apps das Update laden.
 
 Sterne, Einstellungen und Spielzeit werden nur lokal im Browser des jeweiligen Geräts gespeichert.

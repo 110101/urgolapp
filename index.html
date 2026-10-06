@@ -984,7 +984,7 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
   $('resetStars').addEventListener('click', function(){ S.stars = 0; save(); applySettingsView(); });
 
   // ---------- Spielzeit pro Tag ----------
-  var LIMIT = 15 * 60;                  // Sekunden Spielzeit pro Tag (15 Minuten)
+  var LIMIT = 10 * 60;                  // Sekunden Spielzeit pro Tag (10 Minuten)
   var TKEY = 'uhr-lernen-zeit';
   function today(){ var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
   var PKEY = 'uhr-lernen-letzte-runde';   // Sterne des letzten Spieltags
