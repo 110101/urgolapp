@@ -504,8 +504,8 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
         <div class="dtrack" id="dtrack">
           <div class="drail"><div class="dfill" id="dfill"></div></div>
           <div class="dthumb" id="dthumb"></div>
-          <div class="dstop"><span class="ddot"></span><span class="dtext"><b>Ganze Stunden</b><small>z. B. drei Uhr</small></span></div>
-          <div class="dstop"><span class="ddot"></span><span class="dtext"><b>Halbe Stunden</b><small>z. B. halb vier</small></span></div>
+          <div class="dstop"><span class="ddot"></span><span class="dtext"><b>Ganze Stunden</b><small>z. B. 3 Uhr</small></span></div>
+          <div class="dstop"><span class="ddot"></span><span class="dtext"><b>Halbe Stunden</b><small>z. B. halb 4</small></span></div>
           <div class="dstop"><span class="ddot"></span><span class="dtext"><b>Viertelstunden</b><small>z. B. Viertel vor vier</small></span></div>
           <div class="dstop"><span class="ddot"></span><span class="dtext"><b>5 Minuten</b><small>z. B. zehn nach drei</small></span></div>
           <div class="dstop"><span class="ddot"></span><span class="dtext"><b>Minutengenau</b><small>z. B. 17 Minuten nach drei</small></span></div>
@@ -586,8 +586,12 @@ legend{font-weight:700; color:var(--muted); margin-bottom:8px; padding:0}
   var W = ['zwölf','eins','zwei','drei','vier','fünf','sechs','sieben','acht','neun','zehn','elf','zwölf'];
   function mod(a, n){ return ((a % n) + n) % n; }
   function disp(tt){ var h = Math.floor(tt / 60) % 12; return h === 0 ? 12 : h; }
+  // In den leichten Stufen (ganze und halbe Stunden) stehen die Stunden als Ziffer: "7 Uhr", "halb 8"
+  function easyDigits(){ return levelIdx() <= 1; }
   function words(tt){
     var h = disp(tt), n = h % 12 + 1, m = tt % 60;
+    if (easyDigits() && m === 0) return h + ' Uhr';
+    if (easyDigits() && m === 30) return 'halb ' + n;
     switch (m) {
       case 0:  return (h === 1 ? 'ein' : W[h]) + ' Uhr';
       case 5:  return 'fünf nach ' + W[h];
